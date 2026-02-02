@@ -1,0 +1,19 @@
+# Entorn Virtual
+.venv/
+env/
+venv/
+ENV/
+
+# Python compilats
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Secrets i variables d'entorn
+.env
+
+# IDEs
+.vscode/
+.idea/
+*.swp
