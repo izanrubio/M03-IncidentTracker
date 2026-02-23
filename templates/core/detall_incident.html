@@ -1,0 +1,6 @@
+<h2>Detall de l'Incident #{{ incident.id }}</h2>
+<p><strong>Títol:</strong> {{ incident.title | safe }}</p>
+<p><strong>Descripció:</strong> {{ incident.description }}</p>
+<p><strong>Creat per:</strong> {{ incident.user.username }}</p>
+<hr>
+<a href="{% url 'perfil' %}">Tornar al perfil</a>

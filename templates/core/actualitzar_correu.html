@@ -1,0 +1,11 @@
+<h2>Actualitzar Perfil de {{ user.username }}</h2>
+<form method="GET">
+    <label>Nou Correu Electrònic:</label>
+    <input type="text" name="email" placeholder="Escriu el teu email...">
+    <button type="submit">Actualitzar</button>
+</form>
+{% if email %}
+    <p>S'ha intentat actualitzar el correu a: {{ email }}</p>
+{% endif %}
+<br>
+<a href="{% url 'perfil' %}">Tornar al perfil</a>

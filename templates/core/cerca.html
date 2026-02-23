@@ -1,0 +1,16 @@
+<h2>Cercador d'Incidents - Auditoria de Izaan Rubio</h2>
+<form method="GET">
+    <input type="text" name="q" value="{{ query }}" placeholder="Cerca...">
+    <button type="submit">Executar Cerca</button>
+</form>
+
+<hr>
+<p>Usuari actual: <strong>{{ user.username }}</strong> (Sessió activa)</p>
+<h3>{{ incident.title | safe }}</h3>
+<ul>
+{% for incident in incidents %}
+    <li>{{ incident }}</li>
+{% empty %}
+    <li>No s'han trobat incidents o la consulta ha fallat.</li>
+{% endfor %}
+</ul>

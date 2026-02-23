@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <title>Àrea Privada - IncidentTracker</title>
+</head>
+<body>
+    <h1>Benvingut a l'Àrea Privada, {{ user.username }}</h1>
+    <p>La teva darrera connexió va ser: {{ user.last_login }}</p>
+
+    <hr>
+    <h3>Nivell d'Accés:</h3>
+    
+    {% if user.is_superuser %}
+        <div style="background-color: #ffcccc; padding: 10px; border: 1px solid red; border-radius: 5px;">
+            <p><strong>⚠️ PANELL D'ADMINISTRADOR ⚠️</strong></p>
+            <p>Tens accés total al sistema. Pots gestionar usuaris i incidents crítics.</p>
+            <a href="/admin/">Anar al Panell de Control (Django Admin)</a>
+        </div>
+    {% else %}
+        <div style="background-color: #e6f7ff; padding: 10px; border: 1px solid blue; border-radius: 5px;">
+            <p><strong>🛡️ Perfil d'Analista</strong></p>
+            <p>Tens accés de lectura als incidents. Reporta qualsevol anomalia a l'administrador.</p>
+        </div>
+    {% endif %}
+
+    <br>
+    <hr>
+    
+    <form action="{% url 'logout' %}" method="post">
+        {% csrf_token %}
+        <button type="submit" style="background-color: #f44336; color: white; border: none; padding: 10px; cursor: pointer;">
+            Tancar Sessió
+        </button>
+    </form>
+
+</body>
+</html>
