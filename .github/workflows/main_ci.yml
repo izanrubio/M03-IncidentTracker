@@ -13,28 +13,31 @@ jobs:
     runs-on: ubuntu-latest
 
     # ─── Servei PostgreSQL ───────────────────────────────────────────────────
+    # La contrasenya és hardcodejada aquí perquè és un contenidor efímer
+    # i aïllat del CI. NO és producció. La SECRET_KEY de Django sí va com a Secret.
     services:
       postgres:
         image: postgres:16
         env:
           POSTGRES_DB: incident_db
           POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          POSTGRES_PASSWORD: ci_password_123
         ports:
           - 5432:5432
-        # Espera que el servei estigui llest abans de continuar
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
 
-    # ─── Variables d'entorn (la SECRET_KEY ve del GitHub Secret) ─────────────
+    # ─── Variables d'entorn ──────────────────────────────────────────────────
+    # SECRET_KEY ve del GitHub Secret (mai escrita al YAML)
+    # DB_PASSWORD coincideix amb la del servei de dalt
     env:
       SECRET_KEY: ${{ secrets.SECRET_KEY }}
       DB_NAME: incident_db
       DB_USER: postgres
-      DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+      DB_PASSWORD: ci_password_123
       DB_HOST: localhost
       DB_PORT: 5432
       ALLOWED_HOSTS: localhost,127.0.0.1
@@ -58,14 +61,11 @@ jobs:
           # Afegim el PPA oficial de Mozilla per tenir Firefox nativo (no snap)
           sudo add-apt-repository ppa:mozillateam/ppa -y
           # Donem prioritat al Firefox del PPA per sobre del snap
-          echo '
-          Package: *
-          Pin: release o=LP-PPA-mozillateam
-          Pin-Priority: 1001
-          ' | sudo tee /etc/apt/preferences.d/mozilla-firefox
+          printf 'Package: *\nPin: release o=LP-PPA-mozillateam\nPin-Priority: 1001\n' \
+            | sudo tee /etc/apt/preferences.d/mozilla-firefox
           sudo apt-get update -y
           sudo apt-get install -y firefox
-          # Instal·la geckodriver i l'afegeix al PATH
+          # Instal·la geckodriver des de GitHub Releases
           GD_VERSION=$(curl -s https://api.github.com/repos/mozilla/geckodriver/releases/latest \
             | grep '"tag_name"' | sed 's/.*"v\([^"]*\)".*/\1/')
           wget -q "https://github.com/mozilla/geckodriver/releases/download/v${GD_VERSION}/geckodriver-v${GD_VERSION}-linux64.tar.gz" \
@@ -76,7 +76,7 @@ jobs:
           echo "✅ Firefox: $(firefox --version)"
           echo "✅ Geckodriver: $(geckodriver --version | head -1)"
 
-      # 4. Instal·la les dependències de Python
+      # 4. Instal·la les dependències de Python (Django, Selenium, psycopg2…)
       - name: 📦 Instal·la dependències (pip)
         run: pip install -r requirements.txt
 
