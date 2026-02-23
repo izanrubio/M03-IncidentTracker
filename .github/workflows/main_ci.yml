@@ -1,0 +1,93 @@
+name: CI – Django & Selenium Audit
+
+# S'executa en cada push i pull request a qualsevol branca
+on:
+  push:
+    branches: [ "**" ]
+  pull_request:
+    branches: [ "**" ]
+
+jobs:
+  test:
+    name: 🔍 Auditoría de Seguretat
+    runs-on: ubuntu-latest
+
+    # ─── Servei PostgreSQL ───────────────────────────────────────────────────
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: incident_db
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: ${{ secrets.DB_PASSWORD }}
+        ports:
+          - 5432:5432
+        # Espera que el servei estigui llest abans de continuar
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    # ─── Variables d'entorn (la SECRET_KEY ve del GitHub Secret) ─────────────
+    env:
+      SECRET_KEY: ${{ secrets.SECRET_KEY }}
+      DB_NAME: incident_db
+      DB_USER: postgres
+      DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+      DB_HOST: localhost
+      DB_PORT: 5432
+      ALLOWED_HOSTS: localhost,127.0.0.1
+
+    steps:
+      # 1. Descarrega el codi del repositori
+      - name: 📥 Checkout del codi
+        uses: actions/checkout@v4
+
+      # 2. Configura Python 3.12
+      - name: 🐍 Configura Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      # 3. Instal·la Firefox (sense snap) i Geckodriver
+      - name: 🦊 Instal·la Firefox i Geckodriver
+        run: |
+          sudo apt-get update -y
+          # Afegim el PPA oficial de Mozilla per tenir Firefox nativo (no snap)
+          sudo add-apt-repository ppa:mozillateam/ppa -y
+          # Donem prioritat al Firefox del PPA per sobre del snap
+          echo '
+          Package: *
+          Pin: release o=LP-PPA-mozillateam
+          Pin-Priority: 1001
+          ' | sudo tee /etc/apt/preferences.d/mozilla-firefox
+          sudo apt-get update -y
+          sudo apt-get install -y firefox
+          # Instal·la geckodriver i l'afegeix al PATH
+          GD_VERSION=$(curl -s https://api.github.com/repos/mozilla/geckodriver/releases/latest \
+            | grep '"tag_name"' | sed 's/.*"v\([^"]*\)".*/\1/')
+          wget -q "https://github.com/mozilla/geckodriver/releases/download/v${GD_VERSION}/geckodriver-v${GD_VERSION}-linux64.tar.gz" \
+            -O /tmp/geckodriver.tar.gz
+          tar -xzf /tmp/geckodriver.tar.gz -C /tmp
+          sudo mv /tmp/geckodriver /usr/local/bin/geckodriver
+          sudo chmod +x /usr/local/bin/geckodriver
+          echo "✅ Firefox: $(firefox --version)"
+          echo "✅ Geckodriver: $(geckodriver --version | head -1)"
+
+      # 4. Instal·la les dependències de Python
+      - name: 📦 Instal·la dependències (pip)
+        run: pip install -r requirements.txt
+
+      # 5. Aplica les migracions a la base de dades del servei
+      - name: 🗃️ Aplica migracions
+        run: python manage.py migrate
+
+      # 6. Executa els tests unitaris de Django
+      - name: 🧪 Tests unitaris (Django)
+        run: python manage.py test core.tests --verbosity=2
+
+      # 7. Executa els tests de Selenium (auditoria de seguretat)
+      - name: 🛡️ Tests Selenium – Auditoria de Seguretat
+        run: python manage.py test core.tests_selenium --verbosity=2
