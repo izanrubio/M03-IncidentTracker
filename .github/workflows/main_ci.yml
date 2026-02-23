@@ -13,8 +13,7 @@ jobs:
     runs-on: ubuntu-latest
 
     # ─── Servei PostgreSQL ───────────────────────────────────────────────────
-    # La contrasenya és hardcodejada aquí perquè és un contenidor efímer
-    # i aïllat del CI. NO és producció. La SECRET_KEY de Django sí va com a Secret.
+    # Contenidor efímer i aïllat: la contrasenya pot ser hardcodejada aquí.
     services:
       postgres:
         image: postgres:16
@@ -31,10 +30,10 @@ jobs:
           --health-retries 5
 
     # ─── Variables d'entorn ──────────────────────────────────────────────────
-    # SECRET_KEY ve del GitHub Secret (mai escrita al YAML)
-    # DB_PASSWORD coincideix amb la del servei de dalt
     env:
-      SECRET_KEY: ${{ secrets.SECRET_KEY }}
+      # SECRET_KEY: valor fix per al CI (no és producció).
+      # En producció real, utilitza un GitHub Secret.
+      SECRET_KEY: "django-ci-dummy-key-not-for-production-use-only"
       DB_NAME: incident_db
       DB_USER: postgres
       DB_PASSWORD: ci_password_123
@@ -58,9 +57,8 @@ jobs:
       - name: 🦊 Instal·la Firefox i Geckodriver
         run: |
           sudo apt-get update -y
-          # Afegim el PPA oficial de Mozilla per tenir Firefox nativo (no snap)
+          # PPA oficial de Mozilla per Firefox natiu (sense snap)
           sudo add-apt-repository ppa:mozillateam/ppa -y
-          # Donem prioritat al Firefox del PPA per sobre del snap
           printf 'Package: *\nPin: release o=LP-PPA-mozillateam\nPin-Priority: 1001\n' \
             | sudo tee /etc/apt/preferences.d/mozilla-firefox
           sudo apt-get update -y
