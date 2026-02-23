@@ -13,6 +13,10 @@ ENV/
 # Secrets i variables d'entorn
 .env
 
+# Fixtures / Dades de la BD (MAI pujar al repo públic!)
+testdb.json
+*.json
+
 # IDEs
 .vscode/
 .idea/
