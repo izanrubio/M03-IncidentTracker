@@ -13,9 +13,8 @@ ENV/
 # Secrets i variables d'entorn
 .env
 
-# Fixtures / Dades de la BD (MAI pujar al repo públic!)
-testdb.json
-*.json
+# Fixtures / Dades de proves (només per al CI, sense dades reals de producció)
+# testdb.json  ← ara es puja al repo perquè el CI en necessita
 
 # IDEs
 .vscode/
