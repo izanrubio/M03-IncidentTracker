@@ -56,11 +56,21 @@ pipeline {
             }
         }
 
-        // ── 5. Tests Selenium – Auditoria ─────────────────────────────────────
+        // ── 5. Tests Selenium – Auditoria ─────────────────────────────────────────
+        // Timeout de 60s: si Firefox no existeix, falla ràpid (UNSTABLE, no FAILURE)
         stage('🛡️ Tests Selenium – Auditoria') {
             steps {
                 catchError(buildResult: 'UNSTABLE', stageResult: 'UNSTABLE') {
-                    sh 'DJANGO_SETTINGS_MODULE=config.settings_ci .venv/bin/python manage.py test core.tests_selenium --verbosity=2'
+                    timeout(time: 60, unit: 'SECONDS') {
+                        sh '''
+                            # Comprova si Firefox existeix abans d'executar el test
+                            if ! command -v firefox &> /dev/null && ! command -v firefox-esr &> /dev/null; then
+                                echo "⚠️ Firefox no disponible en aquest agent. S'omet el test Selenium."
+                                exit 1
+                            fi
+                            DJANGO_SETTINGS_MODULE=config.settings_ci .venv/bin/python manage.py test core.tests_selenium --verbosity=2
+                        '''
+                    }
                 }
             }
         }
